@@ -513,7 +513,7 @@ public class GoBildaPinpointDriver extends I2cDeviceSynchDevice<I2cDeviceSynchSi
      * Send a position that the Pinpoint should use to track your robot relative to.
      * You can use this to update the estimated position of your robot with new external
      * sensor data, or to run a robot in field coordinates.
-     * @param posX the new X position you'd like the Pinpoint to track your robot relive to.
+     * @param posX the new X position you'd like the Pinpoint to track your robot relative to.
      * @param distanceUnit the unit for posX
      */
     public void setPosX(double posX, DistanceUnit distanceUnit){
@@ -524,7 +524,7 @@ public class GoBildaPinpointDriver extends I2cDeviceSynchDevice<I2cDeviceSynchSi
      * Send a position that the Pinpoint should use to track your robot relative to.
      * You can use this to update the estimated position of your robot with new external
      * sensor data, or to run a robot in field coordinates.
-     * @param posY the new Y position you'd like the Pinpoint to track your robot relive to.
+     * @param posY the new Y position you'd like the Pinpoint to track your robot relative to.
      * @param distanceUnit the unit for posY
      */
     public void setPosY(double posY, DistanceUnit distanceUnit){
@@ -535,7 +535,7 @@ public class GoBildaPinpointDriver extends I2cDeviceSynchDevice<I2cDeviceSynchSi
      * Send a heading that the Pinpoint should use to track your robot relative to.
      * You can use this to update the estimated position of your robot with new external
      * sensor data, or to run a robot in field coordinates.
-     * @param heading the new heading you'd like the Pinpoint to track your robot relive to.
+     * @param heading the new heading you'd like the Pinpoint to track your robot relative to.
      * @param angleUnit Radians or Degrees
      */
     public void setHeading(double heading, AngleUnit angleUnit){
