@@ -47,7 +47,7 @@ import java.util.Arrays;
         name = "goBILDA® Pinpoint Odometry Computer",
         xmlTag = "goBILDAPinpoint",
         description ="goBILDA® Pinpoint Odometry Computer (IMU Sensor Fusion for 2 Wheel Odometry)"
-        )
+)
 
 public class GoBildaPinpointDriver extends I2cDeviceSynchDevice<I2cDeviceSynchSimple> {
 
@@ -64,6 +64,8 @@ public class GoBildaPinpointDriver extends I2cDeviceSynchDevice<I2cDeviceSynchSi
 
     private static final float goBILDA_SWINGARM_POD = 13.26291192f; //ticks-per-mm for the goBILDA Swingarm Pod
     private static final float goBILDA_4_BAR_POD    = 19.89436789f; //ticks-per-mm for the goBILDA 4-Bar Pod
+
+    private static volatile Pose2D cachedSetPositionValue = null;
 
     //i2c address of the device
     public static final byte DEFAULT_ADDRESS = 0x31;
@@ -157,7 +159,7 @@ public class GoBildaPinpointDriver extends I2cDeviceSynchDevice<I2cDeviceSynchSi
 
 
     /** Writes an int to the i2c device
-    @param reg the register to write the int to
+     @param reg the register to write the int to
      @param i the integer to write to the register
      */
     private void writeInt(final Register reg, int i){
@@ -245,6 +247,10 @@ public class GoBildaPinpointDriver extends I2cDeviceSynchDevice<I2cDeviceSynchSi
             return DeviceStatus.FAULT_IMU_RUNAWAY;
         }
         if ((s & DeviceStatus.READY.status) != 0){
+            if(cachedSetPositionValue != null){
+                setPosition(cachedSetPositionValue);
+                cachedSetPositionValue = null;
+            }
             return DeviceStatus.READY;
         }
         if ((s & DeviceStatus.FAULT_BAD_READ.status) != 0){
@@ -334,6 +340,7 @@ public class GoBildaPinpointDriver extends I2cDeviceSynchDevice<I2cDeviceSynchSi
         yVelocity    = isVelocityCorrupt(oldVelY, yVelocity, velocityThreshold);
         hVelocity    = isVelocityCorrupt(oldVelH, hVelocity, headingVelocityThreshold);
 
+        getDeviceStatus();
     }
 
     /**
@@ -491,17 +498,22 @@ public class GoBildaPinpointDriver extends I2cDeviceSynchDevice<I2cDeviceSynchSi
      * @param pos a Pose2D describing the robot's new position.
      */
     public Pose2D setPosition(Pose2D pos){
-        writeByteArray(Register.X_POSITION,(floatToByteArray((float) pos.getX(DistanceUnit.MM), ByteOrder.LITTLE_ENDIAN)));
-        writeByteArray(Register.Y_POSITION,(floatToByteArray((float) pos.getY(DistanceUnit.MM),ByteOrder.LITTLE_ENDIAN)));
-        writeByteArray(Register.H_ORIENTATION,(floatToByteArray((float) pos.getHeading(AngleUnit.RADIANS),ByteOrder.LITTLE_ENDIAN)));
-        return pos;
+        if(getDeviceStatus() != DeviceStatus.READY){
+            cachedSetPositionValue = pos;
+            return getPosition();
+        }else {
+            writeByteArray(Register.X_POSITION, (floatToByteArray((float) pos.getX(DistanceUnit.MM), ByteOrder.LITTLE_ENDIAN)));
+            writeByteArray(Register.Y_POSITION, (floatToByteArray((float) pos.getY(DistanceUnit.MM), ByteOrder.LITTLE_ENDIAN)));
+            writeByteArray(Register.H_ORIENTATION, (floatToByteArray((float) pos.getHeading(AngleUnit.RADIANS), ByteOrder.LITTLE_ENDIAN)));
+            return pos;
+        }
     }
 
     /**
      * Send a position that the Pinpoint should use to track your robot relative to.
      * You can use this to update the estimated position of your robot with new external
      * sensor data, or to run a robot in field coordinates.
-     * @param posX the new X position you'd like the Pinpoint to track your robot relive to.
+     * @param posX the new X position you'd like the Pinpoint to track your robot relative to.
      * @param distanceUnit the unit for posX
      */
     public void setPosX(double posX, DistanceUnit distanceUnit){
@@ -512,7 +524,7 @@ public class GoBildaPinpointDriver extends I2cDeviceSynchDevice<I2cDeviceSynchSi
      * Send a position that the Pinpoint should use to track your robot relative to.
      * You can use this to update the estimated position of your robot with new external
      * sensor data, or to run a robot in field coordinates.
-     * @param posY the new Y position you'd like the Pinpoint to track your robot relive to.
+     * @param posY the new Y position you'd like the Pinpoint to track your robot relative to.
      * @param distanceUnit the unit for posY
      */
     public void setPosY(double posY, DistanceUnit distanceUnit){
@@ -523,7 +535,7 @@ public class GoBildaPinpointDriver extends I2cDeviceSynchDevice<I2cDeviceSynchSi
      * Send a heading that the Pinpoint should use to track your robot relative to.
      * You can use this to update the estimated position of your robot with new external
      * sensor data, or to run a robot in field coordinates.
-     * @param heading the new heading you'd like the Pinpoint to track your robot relive to.
+     * @param heading the new heading you'd like the Pinpoint to track your robot relative to.
      * @param angleUnit Radians or Degrees
      */
     public void setHeading(double heading, AngleUnit angleUnit){
